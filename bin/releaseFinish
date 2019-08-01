@@ -1,0 +1,134 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+STR_RLS="release/"
+SCRIPT_CRTTAG="crtTag"
+
+doJob(){
+    br_rls_name=$STR_RLS$pro_name
+    echo $COLOR_SUCC"项目名-->"$pro_name$COLOR_END
+    git "stash"
+    git "fetch" "-p"
+    git "checkout" $br_rls_name
+    git "pull"
+    echo "tag->>"$tag_name",tag_msg->>"$tag_msg
+    $SCRIPT_CRTTAG $tag_name $tag_msg
+}
+
+doMergeDvlp() {
+    if [ ! -n "$is_mg_dvlp"  ]; then
+        echo $COLOR_QS"是否合并至develop分支？(Y/N,回车直接取消)"$COLOR_END
+        read mergedevelop
+        is_mg_dvlp=$mergedevelop
+    fi
+    is_mg_dvlp=$(echo $is_mg_dvlp | tr '[a-z]' '[A-Z]')
+
+    if [ ! -n "$is_mg_dvlp" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_mg_dvlp = "N" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_mg_dvlp = "Y" ]; then
+        git "checkout" $develop
+        git "pull"
+        git "merge" $br_rls_name
+        git "push"
+    else
+        doMergeDvlp
+    fi
+}
+
+doMergeRls() {
+    if [ ! -n "$is_mg_rls"  ]; then
+        echo $COLOR_QS"是否合并至master分支？(Y/N,回车直接取消)"$COLOR_END
+        read mergeMaster
+        is_mg_rls=$mergeMaster
+    fi
+    is_mg_rls=$(echo $is_mg_rls | tr '[a-z]' '[A-Z]')
+
+    if [ ! -n "$is_mg_rls" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_mg_rls = "N" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_mg_rls = "Y" ]; then
+        git "checkout" $master
+        git "pull"
+        git "merge" $br_rls_name
+        git "push"
+    else
+        doMergeRls
+    fi
+}
+
+getProName(){
+    if [ ! -n "$pro_name" ]; then
+        echo $COLOR_QS"请输入项目名:(直接回车退出)"$COLOR_END
+        read project
+        if [ ! -n "$project" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            pro_name=$project
+            getProName
+        fi
+    else
+        doJob
+    fi
+}
+
+checkProject(){
+  status=`git status`
+  #没什么提交
+  if [[ $status =~ "working tree clean" ]];then
+    if [ -f "./gitflowConfig.sh" ];then
+      chmod 777 ./gitflowConfig.sh
+      source ./gitflowConfig.sh
+      getProName
+    else
+      echo $COLOR_ERR"该库还没有配置gitflow文件 请执行 setUp.sh 后再试 \n"$COLOR_ERR
+    fi
+  else
+    echo $COLOR_ERR"工作区有文件修改且未提交\n"$COLOR_ERR
+    echo $COLOR_ERR"请返回修改提交或者暂存"$COLOR_ERR
+    exit 0
+  fi
+}
+
+pro_name=""
+for arg1 in "$1"
+do
+    pro_name=$arg1
+done
+tag_name=""
+for arg2 in "$2"
+do
+    tag_name=$arg2
+done
+tag_msg=""
+for arg3 in "$3"
+do
+    tag_msg=$arg3
+done
+is_mg_dvlp=""
+for arg4 in "$4"
+do
+    is_mg_dvlp=$arg4
+done
+is_mg_rls=""
+for arg5 in "$5"
+do
+    is_mg_rls=$arg5
+done
+
+br_name=""
+checkProject
+doMergeDvlp
+doMergeRls

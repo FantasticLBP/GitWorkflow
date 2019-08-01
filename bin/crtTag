@@ -1,0 +1,74 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+doCreate(){
+    echo $COLOR_SUCC"Tag名-->"$tag_name",Tag描述-->"$tag_msg$COLOR_END
+    git "pull"
+    git "tag" "-a" $tag_name "-m" $tag_msg
+    git "push" "origin" $tag_name
+}
+
+checkTagName() {
+    str1=$(echo $tag_name | cut -d"." -f 1)
+    str2=$(echo $tag_name | cut -d"." -f 2)
+    str3=$(echo $tag_name | cut -d"." -f 3)
+    str4=$(echo $tag_name | cut -d"." -f 4)
+    if [ -n "$str1" -a -n "$str2" -a -n "$str3" -a -z "$str4" ]; then
+        tag_name=$tag_name
+    else
+        tag_name=""
+    fi
+}
+
+getTagName(){
+    if [ ! -n "$tag_name" ]; then
+        echo $COLOR_QS"请输入tag名:(直接回车退出)"$COLOR_END
+        read tag
+        if [ ! -n "$tag" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            tag_name=$tag
+            checkTagName
+            getTagName
+        fi
+    else
+        getTagMsg
+    fi
+}
+
+getTagMsg(){
+    if [ ! -n "$tag_msg" ]; then
+        echo $COLOR_QS"请输入tag描述:(直接回车退出)"$COLOR_END
+        read msg
+        if [ ! -n "$msg" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            tag_msg=$msg
+            getTagMsg
+        fi
+    else
+        doCreate
+    fi
+}
+
+tag_name=""
+for arg1 in "$1"
+do
+    tag_name=$arg1
+done
+
+tag_msg=""
+for arg2 in "$2"
+do
+    tag_msg=$arg2
+done
+
+checkTagName
+getTagName

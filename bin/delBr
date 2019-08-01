@@ -1,0 +1,68 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+getCurrentBranch() {
+    git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3
+    git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 4
+}
+
+formatName() {
+    echo $cur_branch | sed 's/[ ][ ]*/\//g'
+}
+
+doDelete(){
+    echo $COLOR_SUCC"当前分支名-->"$cur_branch",删除分支名-->"$branch_name$COLOR_END
+    if [[ $branch_name == $master ]]; then
+        echo $COLOR_ERR"master分支不可删除!"$COLOR_END
+        exit 0
+    elif [[ $branch_name == $cur_branch ]]; then
+        git "stash"
+        if [[ $branch_name == $develop ]]; then
+            git "checkout" $master
+        else
+            git "checkout" $develop
+        fi
+    fi
+
+    git "push" "origin" ":"$branch_name
+    git "branch" "-D" $branch_name
+}
+
+getBranchName(){
+    if [ ! -n "$branch_name" ]; then
+        echo $COLOR_QS"请输入分支名:(直接回车退出)"$COLOR_END
+        read branch
+        if [ ! -n "$branch" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            branch_name=$branch
+            getBranchName
+        fi
+    else
+        if [ -f "./gitflowConfig.sh" ];then
+            chmod 777 ./gitflowConfig.sh
+            source ./gitflowConfig.sh
+            doDelete
+        else
+            echo $COLOR_ERR"该库还没有配置gitflow文件 请执行 setUp.sh 后再试 \n"$COLOR_ERR
+        fi
+        
+    fi
+}
+
+branch_name=""
+for arg1 in "$1"
+do
+    branch_name=$arg1
+done
+
+cur_branch=`getCurrentBranch`
+cur_branch=`formatName`
+
+getBranchName

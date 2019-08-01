@@ -1,0 +1,60 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+getCurrentBranch() {
+    git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3
+    git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 4
+}
+
+formatName() {
+    echo $cur_branch | sed 's/[ ][ ]*/\//g'
+}
+
+doCreate(){
+    echo $COLOR_SUCC"当前分支名-->"$cur_branch",创建分支名-->"$branch_name$COLOR_END
+    git "stash"
+    git "fetch" "-p"
+    git "pull"
+    git "checkout" "-b" $branch_name
+    git "push" "origin" $branch_name
+    echo '111'
+    echo $branch_name
+    echo '111'
+    git "branch" "-u"  origin/$branch_name  $branch_name
+    # git "branch" "-–set-upstream" $branch_name origin/$branch_name
+#    git "checkout" $cur_branch
+  #  git "stash" "pop"
+ #   git "checkout" $branch_name
+}
+
+getBranchName(){
+    if [ ! -n "$branch_name" ]; then
+        echo $COLOR_QS"请输入分支名:(直接回车退出)"$COLOR_END
+        read branch
+        if [ ! -n "$branch" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            branch_name=$branch
+            getBranchName
+        fi
+    else
+        doCreate
+    fi
+}
+
+branch_name=""
+for arg1 in "$1"
+do
+    branch_name=$arg1
+done
+
+cur_branch=`getCurrentBranch`
+cur_branch=`formatName`
+
+getBranchName

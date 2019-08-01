@@ -1,0 +1,94 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+STR="feature/"
+RLS_START="releaseStart"
+
+doJob(){
+    br_name=$STR$pro_name
+    echo $COLOR_SUCC"项目名-->"$pro_name",分支名-->"$br_name$COLOR_END
+    git "stash"
+    git "fetch" "-p"
+    git "checkout" $develop
+    git "pull"
+    git "checkout" $br_name
+    git "pull"
+    git "merge" $develop
+    git "push"
+}
+
+doReleaseJob() {
+    if [ ! -n "$is_release"  ]; then
+        echo $COLOR_QS"是否立即执行releaseStart操作？(Y/N,回车直接取消)"$COLOR_END
+        read release
+        is_release=$release
+    fi
+    is_release=$(echo $is_release | tr '[a-z]' '[A-Z]')
+
+    if [ ! -n "$is_release" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_release = "N" ]; then
+        echo $COLOR_ERR"用户取消!"$COLOR_END
+        exit 0
+    elif [ $is_release = "Y" ]; then
+        $RLS_START $pro_name
+    else
+        doReleaseJob
+    fi
+}
+
+getProName(){
+
+    if [ ! -n "$pro_name" ]; then
+        echo $COLOR_QS"请输入项目名:(直接回车退出)"$COLOR_END
+        read project
+        if [ ! -n "$project" ]; then
+            echo $COLOR_ERR"流程取消!"$COLOR_END
+            exit 0
+        else
+            pro_name=$project
+            getProName
+        fi
+    else
+        doJob
+    fi
+}
+
+checkProject(){
+  status=`git status`
+#没什么提交
+if [[ $status =~ "working tree clean" ]];then
+  if [ -f "./gitflowConfig.sh" ];then
+    chmod 777 ./gitflowConfig.sh
+    source ./gitflowConfig.sh
+    getProName
+  else
+    echo $COLOR_ERR"该库还没有配置gitflow文件 请执行 setUp.sh 后再试 \n"$COLOR_ERR
+  fi
+else
+  echo $COLOR_ERR"工作区有文件修改且未提交\n"$COLOR_ERR
+  echo $COLOR_ERR"请返回修改提交或者暂存"$COLOR_ERR
+  exit 0
+fi
+}
+
+pro_name=""
+for arg1 in "$1"
+do
+    pro_name=$arg1
+done
+is_release=""
+for arg2 in "$2"
+do
+    is_release=$arg2
+done
+
+br_name=""
+checkProject
+doReleaseJob

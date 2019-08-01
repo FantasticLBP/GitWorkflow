@@ -1,0 +1,52 @@
+#!/bin/sh #!/usr/bin/env bash
+
+COLOR_ERR="\033[1;31m"    #出错提示
+COLOR_SUCC="\033[0;32m"  #成功提示
+COLOR_QS="\033[1;37m"  #问题颜色
+COLOR_AW="\033[0;37m"  #答案提示
+COLOR_END="\033[1;34m"     #颜色结束符
+
+
+#==============================================================================
+#创建feature分支脚本
+SCRIPT_FEATURE_START="featureStart"
+
+#==============================================================================
+
+getBatchProName(){
+
+
+	if [[ ${#pro_name_arr[*]} == 0 ]]; then
+		#没有输入项目名
+			echo $COLOR_QS'按下 <CTRL-D> 退出'$COLOR_END
+			i=0
+			while [[ true ]]; do
+				#statements
+				echo $COLOR_QS"请输入项目名称:(直接回车退出)"$COLOR_END
+				read project
+				if [[ $project ]]; then
+					#输入项目名
+					pro_name_arr[i]=$project
+					i+=1
+				fi
+			done
+
+
+	else
+
+	fi
+
+}
+
+doJob(){
+
+
+}
+
+echo '请输入项目名称'
+
+#需要拉取分支工程名数组
+pro_name_arr=();
+
+#分支名
+br_name=""
