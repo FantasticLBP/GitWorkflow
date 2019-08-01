@@ -42,6 +42,9 @@
 
 	执行工程下面的 `./exportPath.sh` 脚本。剩下的配置在脚本内部自动完成了。
 	
+	- 进入目录，给脚本添加权限。`chmod +x exportPath.sh`
+	- 执行脚本。`./exportPath.sh`
+	
 	原理：
 	shell的配置文件。其中是用bash的 请在~/.目录下修改编辑 .bashrc；使用oh_my_zsh的 请在~/.目录下修改编辑 .zshrc（推荐使用 iterm2+oh_my_zsh）。比如我的bin目录的路径是：`/Users/liubinpeng/WorkSpace/IOS/sdg_frontend_gitflowcli/bin`，就需要在上述的配置文件里增加一行：`export PATH=/Users/liubinpeng/WorkSpace/IOS/sdg_frontend_gitflowcli/bin:$PATH`
 
